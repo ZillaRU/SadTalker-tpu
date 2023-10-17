@@ -161,7 +161,7 @@ cython_debug/
 
 examples/results/*
 gfpgan/*
-checkpoints/*
+# checkpoints/*
 assets/*
 results/*
 Dockerfile
