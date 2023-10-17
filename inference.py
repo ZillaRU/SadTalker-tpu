@@ -1,13 +1,13 @@
-from glob import glob
 import shutil
 import torch
-from time import  strftime
+from time import strftime
 import os, sys, time
 from argparse import ArgumentParser
 
 from src.utils.preprocess import CropAndExtract
 from src.test_audio2coeff import Audio2Coeff  
 from src.facerender.animate import AnimateFromCoeff
+from src.facerender.pirender_animate import AnimateFromCoeff_PIRender
 from src.generate_batch import get_data
 from src.generate_facerender_batch import get_facerender_data
 from src.utils.init_path import init_path
@@ -37,8 +37,13 @@ def main(args):
 
     audio_to_coeff = Audio2Coeff(sadtalker_paths,  device)
     
-    animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
-
+    if args.facerender == 'facevid2vid':
+        animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
+    elif args.facerender == 'pirender':
+        animate_from_coeff = AnimateFromCoeff_PIRender(sadtalker_paths, device)
+    else:
+        raise(RuntimeError('Unknown model: {}'.format(args.facerender)))
+    
     #crop image and extract 3dmm from image
     first_frame_dir = os.path.join(save_dir, 'first_frame_dir')
     os.makedirs(first_frame_dir, exist_ok=True)
@@ -82,6 +87,7 @@ def main(args):
     #coeff2video
     data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path, 
                                 batch_size, input_yaw_list, input_pitch_list, input_roll_list,
+                                facemodel=args.facerender,
                                 expression_scale=args.expression_scale, still_mode=args.still, preprocess=args.preprocess, size=args.size)
     
     result = animate_from_coeff.generate(data, save_dir, pic_path, crop_info, \
@@ -97,8 +103,8 @@ def main(args):
 if __name__ == '__main__':
 
     parser = ArgumentParser()  
-    parser.add_argument("--driven_audio", default='./examples/driven_audio/bus_chinese.wav', help="path to driven audio")
-    parser.add_argument("--source_image", default='./examples/source_image/full_body_1.png', help="path to source image")
+    parser.add_argument("--driven_audio", default='./examples/driven_audio/chinese_news.wav', help="path to driven audio")
+    parser.add_argument("--source_image", default='./examples/source_image/art_0.png', help="path to source image")
     parser.add_argument("--ref_eyeblink", default=None, help="path to reference video providing eye blinking")
     parser.add_argument("--ref_pose", default=None, help="path to reference video providing pose")
     parser.add_argument("--checkpoint_dir", default='./checkpoints', help="path to output")
@@ -110,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('--input_yaw', nargs='+', type=int, default=None, help="the input yaw degree of the user ")
     parser.add_argument('--input_pitch', nargs='+', type=int, default=None, help="the input pitch degree of the user")
     parser.add_argument('--input_roll', nargs='+', type=int, default=None, help="the input roll degree of the user")
-    parser.add_argument('--enhancer',  type=str, default=None, help="Face enhancer, [gfpgan, RestoreFormer]")
+    parser.add_argument('--enhancer',  type=str, default=None, help="Face enhancer, [gfpgan, RestoreFormer, codeformer]")
     parser.add_argument('--background_enhancer',  type=str, default=None, help="background enhancer, [realesrgan]")
     parser.add_argument("--cpu", dest="cpu", action="store_true") 
     parser.add_argument("--face3dvis", action="store_true", help="generate 3d face and 3d landmarks") 
@@ -118,7 +124,8 @@ if __name__ == '__main__':
     parser.add_argument("--preprocess", default='crop', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images" ) 
     parser.add_argument("--verbose",action="store_true", help="saving the intermedia output or not" ) 
     parser.add_argument("--old_version",action="store_true", help="use the pth other than safetensor version" ) 
-
+    parser.add_argument("--facerender", default='pirender', choices=['pirender', 'facevid2vid'] ) 
+    
 
     # net structure and parameters
     parser.add_argument('--net_recon', type=str, default='resnet50', choices=['resnet18', 'resnet34', 'resnet50'], help='useless')

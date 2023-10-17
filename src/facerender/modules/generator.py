@@ -225,8 +225,6 @@ class OcclusionAwareSPADEGenerator(nn.Module):
                                                      kp_source=kp_source)
             output_dict['mask'] = dense_motion['mask']
 
-            # import pdb; pdb.set_trace()
-
             if 'occlusion_map' in dense_motion:
                 occlusion_map = dense_motion['occlusion_map']
                 output_dict['occlusion_map'] = occlusion_map

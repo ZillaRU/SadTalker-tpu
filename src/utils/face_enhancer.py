@@ -6,7 +6,7 @@ from gfpgan import GFPGANer
 from tqdm import tqdm
 
 from src.utils.videoio import load_video_to_cv2
-
+from src.utils.codeformer import setup_model
 import cv2
 
 
@@ -70,23 +70,7 @@ def enhancer_generator_no_len(images, method='gfpgan', bg_upsampler='realesrgan'
 
     # ------------------------ set up background upsampler ------------------------
     if bg_upsampler == 'realesrgan':
-        if not torch.cuda.is_available():  # CPU
-            import warnings
-            warnings.warn('The unoptimized RealESRGAN is slow on CPU. We do not use it. '
-                          'If you really want to use it, please modify the corresponding codes.')
-            bg_upsampler = None
-        else:
-            from basicsr.archs.rrdbnet_arch import RRDBNet
-            from realesrgan import RealESRGANer
-            model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
-            bg_upsampler = RealESRGANer(
-                scale=2,
-                model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
-                model=model,
-                tile=400,
-                tile_pad=10,
-                pre_pad=0,
-                half=True)  # need to set False in CPU mode
+        bg_upsampler
     else:
         bg_upsampler = None
 
@@ -105,19 +89,21 @@ def enhancer_generator_no_len(images, method='gfpgan', bg_upsampler='realesrgan'
         upscale=2,
         arch=arch,
         channel_multiplier=channel_multiplier,
-        bg_upsampler=bg_upsampler)
+        bg_upsampler=bg_upsampler) if method != 'codeformer' else setup_model()
 
     # ------------------------ restore ------------------------
     for idx in tqdm(range(len(images)), 'Face Enhancer:'):
         
         img = cv2.cvtColor(images[idx], cv2.COLOR_RGB2BGR)
         
-        # restore faces and background if necessary
-        cropped_faces, restored_faces, r_img = restorer.enhance(
-            img,
-            has_aligned=False,
-            only_center_face=False,
-            paste_back=True)
-        
+        if method == 'codeformer':
+            r_img = restorer.restore(img)
+        else:
+            # restore faces and background if necessary
+            cropped_faces, restored_faces, r_img = restorer.enhance(
+                img,
+                has_aligned=False,
+                only_center_face=False,
+                paste_back=True)
         r_img = cv2.cvtColor(r_img, cv2.COLOR_BGR2RGB)
         yield r_img

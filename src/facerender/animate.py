@@ -36,7 +36,59 @@ class AnimateFromCoeff():
 
         with open(sadtalker_path['facerender_yaml']) as f:
             config = yaml.safe_load(f)
-
+        print(config)
+        # {'model_params': 
+        #     {'common_params': {
+        #         'num_kp': 15, 
+        #         'image_channel': 3, 
+        #         'feature_channel': 32, 
+        #         'estimate_jacobian': False
+        #         },
+        #      'kp_detector_params': {
+        #         'temperature': 0.1, 
+        #         'block_expansion': 32, 
+        #         'max_features': 1024, 
+        #         'scale_factor': 0.25, 
+        #         'num_blocks': 5, 
+        #         'reshape_channel': 16384, 
+        #         'reshape_depth': 16},
+        #      'he_estimator_params': {
+        #         'block_expansion': 64, 
+        #         'max_features': 2048, 
+        #         'num_bins': 66
+        #         }, 
+        #      'generator_params': {
+        #         'block_expansion': 64, 
+        #         'max_features': 512, 
+        #         'num_down_blocks': 2, 
+        #         'reshape_channel': 32, 
+        #         'reshape_depth': 16, 
+        #         'num_resblocks': 6, 
+        #         'estimate_occlusion_map': True, 
+        #         'dense_motion_params': {
+        #             'block_expansion': 32, 
+        #             'max_features': 1024, 
+        #             'num_blocks': 5, 
+        #             'reshape_depth': 16, 
+        #             'compress': 4
+        #             }
+        #         },
+        #      'discriminator_params': {
+        #         'scales': [1], 
+        #         'block_expansion': 32, 
+        #         'max_features': 512, 
+        #         'num_blocks': 4, 
+        #         'sn': True
+        #         },
+        #      'mapping_params': {
+        #         'coeff_nc': 70, 
+        #         'descriptor_nc': 1024, 
+        #         'layer': 3, 
+        #         'num_kp': 15, 
+        #         'num_bins': 66
+        #         }
+        #      }
+        # }
         generator = OcclusionAwareSPADEGenerator(**config['model_params']['generator_params'],
                                                     **config['model_params']['common_params'])
         kp_extractor = KPDetector(**config['model_params']['kp_detector_params'],

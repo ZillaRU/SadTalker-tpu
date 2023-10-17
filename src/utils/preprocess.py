@@ -147,7 +147,7 @@ class CropAndExtract():
  
                 trans_params = np.array([float(item) for item in np.hsplit(trans_params, 5)]).astype(np.float32)
                 im_t = torch.tensor(np.array(im1)/255., dtype=torch.float32).permute(2, 0, 1).to(self.device).unsqueeze(0)
-                
+                ###############################################33
                 with torch.no_grad():
                     full_coeff = self.net_recon(im_t)
                     coeffs = split_coeff(full_coeff)
