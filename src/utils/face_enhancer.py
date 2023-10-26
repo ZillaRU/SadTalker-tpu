@@ -4,9 +4,10 @@ import torch
 from gfpgan import GFPGANer
 
 from tqdm import tqdm
-
+from src.utils.npuengine import EngineOV
 from src.utils.videoio import load_video_to_cv2
 from src.utils.codeformer import setup_model
+from src.utils.upscaler import UpscaleModel
 import cv2
 
 
@@ -48,41 +49,12 @@ def enhancer_generator_no_len(images, method='gfpgan', bg_upsampler='realesrgan'
     if not isinstance(images, list) and os.path.isfile(images): # handle video to images
         images = load_video_to_cv2(images)
 
-    # ------------------------ set up GFPGAN restorer ------------------------
-    if  method == 'gfpgan':
-        arch = 'clean'
-        channel_multiplier = 2
-        model_name = 'GFPGANv1.4'
-        url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth'
-    elif method == 'RestoreFormer':
-        arch = 'RestoreFormer'
-        channel_multiplier = 2
-        model_name = 'RestoreFormer'
-        url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/RestoreFormer.pth'
-    elif method == 'codeformer': # TODO:
-        arch = 'CodeFormer'
-        channel_multiplier = 2
-        model_name = 'CodeFormer'
-        url = 'https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth'
-    else:
-        raise ValueError(f'Wrong model version {method}.')
-
-
-    # ------------------------ set up background upsampler ------------------------
-    if bg_upsampler == 'realesrgan':
-        bg_upsampler
-    else:
-        bg_upsampler = None
-
-    # determine model paths
-    model_path = os.path.join('gfpgan/weights', model_name + '.pth')
-    
-    if not os.path.isfile(model_path):
-        model_path = os.path.join('checkpoints', model_name + '.pth')
-    
-    if not os.path.isfile(model_path):
-        # download pre-trained models from url
-        model_path = url
+    # # ------------------------ set up background upsampler ------------------------
+    # if bg_upsampler == 'realesrgan':
+    #     bg_upsampler = EngineOV('./bmodel_files/realesrgan-x4_BF16_480.bmodel')
+    # else:
+    #     bg_upsampler = None
+    bg_upsampler = None
 
     restorer = GFPGANer(
         model_path=model_path,
@@ -90,20 +62,22 @@ def enhancer_generator_no_len(images, method='gfpgan', bg_upsampler='realesrgan'
         arch=arch,
         channel_multiplier=channel_multiplier,
         bg_upsampler=bg_upsampler) if method != 'codeformer' else setup_model()
-
+    
+    if bg_upsampler is not None:
+        bg_upsampler = UpscaleModel()
     # ------------------------ restore ------------------------
     for idx in tqdm(range(len(images)), 'Face Enhancer:'):
         
-        img = cv2.cvtColor(images[idx], cv2.COLOR_RGB2BGR)
-        
         if method == 'codeformer':
-            r_img = restorer.restore(img)
+            img = images[idx]
+            r_img = restorer.restore(img) # RGB
         else:
+            img = cv2.cvtColor(images[idx], cv2.COLOR_RGB2BGR)
             # restore faces and background if necessary
             cropped_faces, restored_faces, r_img = restorer.enhance(
                 img,
                 has_aligned=False,
                 only_center_face=False,
                 paste_back=True)
-        r_img = cv2.cvtColor(r_img, cv2.COLOR_BGR2RGB)
+            r_img = cv2.cvtColor(r_img, cv2.COLOR_BGR2RGB)
         yield r_img

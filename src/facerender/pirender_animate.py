@@ -101,7 +101,6 @@ class AnimateFromCoeff_PIRender():
             enhanced_path = os.path.join(video_save_dir, 'temp_'+video_name_enhancer)
             av_path_enhancer = os.path.join(video_save_dir, video_name_enhancer) 
             return_path = av_path_enhancer
-
             try:
                 enhanced_images_gen_with_len = enhancer_generator_with_len(full_video_path, method=enhancer, bg_upsampler=background_enhancer)
                 imageio.mimsave(enhanced_path, enhanced_images_gen_with_len, fps=float(25))

@@ -103,8 +103,8 @@ def main(args):
 if __name__ == '__main__':
 
     parser = ArgumentParser()  
-    parser.add_argument("--driven_audio", default='./examples/driven_audio/chinese_news.wav', help="path to driven audio")
-    parser.add_argument("--source_image", default='./examples/source_image/art_0.png', help="path to source image")
+    parser.add_argument("--driven_audio", default='./examples/driven_audio/chinese_poem2.wav', help="path to driven audio")
+    parser.add_argument("--source_image", default='./examples/source_image/aigc0.png', help="path to source image")
     parser.add_argument("--ref_eyeblink", default=None, help="path to reference video providing eye blinking")
     parser.add_argument("--ref_pose", default=None, help="path to reference video providing pose")
     parser.add_argument("--checkpoint_dir", default='./checkpoints', help="path to output")
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     parser.add_argument("--cpu", dest="cpu", action="store_true") 
     parser.add_argument("--face3dvis", action="store_true", help="generate 3d face and 3d landmarks") 
     parser.add_argument("--still", action="store_true", help="can crop back to the original videos for the full body aniamtion") 
-    parser.add_argument("--preprocess", default='crop', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images" ) 
+    parser.add_argument("--preprocess", default='full', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images" ) 
     parser.add_argument("--verbose",action="store_true", help="saving the intermedia output or not" ) 
     parser.add_argument("--old_version",action="store_true", help="use the pth other than safetensor version" ) 
     parser.add_argument("--facerender", default='pirender', choices=['pirender', 'facevid2vid'] ) 

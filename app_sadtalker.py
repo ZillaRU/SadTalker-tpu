@@ -22,12 +22,12 @@ def ref_video_fn(path_of_ref_video):
     else:
         return gr.update(value=False)
 
-def sadtalker_demo(checkpoint_path='checkpoints', config_path='src/config', warpfn=None):
+def sadtalker_demo(checkpoint_path='checkpoints', size=256, facerender='pirender', config_path='src/config', warpfn=None):
 
-    sad_talker = SadTalker(checkpoint_path, config_path, lazy_load=True)
+    sad_talker = SadTalker(checkpoint_path, size, facerender, config_path)
 
     with gr.Blocks(analytics_enabled=False) as sadtalker_interface:
-        gr.Markdown("<div align='center'> <h2> 😭 SadTalker: Learning Realistic 3D Motion Coefficients for Stylized Audio-Driven Single Image Talking Face Animation (CVPR 2023) </span> </h2> \
+        gr.Markdown("<div align='center'> <h2> 😭 SadTalker: Portrait + Audio = Talking Video (Powered by AirBox) </span> </h2> \
                     <a style='font-size:18px;color: #efefef' href='https://arxiv.org/abs/2211.12194'>Arxiv</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \
                     <a style='font-size:18px;color: #efefef' href='https://sadtalker.github.io'>Homepage</a>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \
                      <a style='font-size:18px;color: #efefef' href='https://github.com/Winfredy/SadTalker'> Github </div>")
@@ -38,19 +38,24 @@ def sadtalker_demo(checkpoint_path='checkpoints', config_path='src/config', warp
                     with gr.TabItem('Upload image'):
                         with gr.Row():
                             source_image = gr.Image(label="Source image", source="upload", type="filepath", elem_id="img2img_image").style(width=512)
-
+                
+                ######################## 
                 with gr.Tabs(elem_id="sadtalker_driven_audio"):
-                    with gr.TabItem('Upload OR TTS'):
+                    with gr.TabItem('Upload'):
                         with gr.Column(variant='panel'):
                             driven_audio = gr.Audio(label="Input audio", source="upload", type="filepath")
 
-                        if sys.platform != 'win32' and not in_webui: 
-                            from src.utils.text2speech import TTSTalker
-                            tts_talker = TTSTalker()
-                            with gr.Column(variant='panel'):
-                                input_text = gr.Textbox(label="Generating audio from text", lines=5, placeholder="please enter some text here, we genreate the audio from text using @Coqui.ai TTS.")
-                                tts = gr.Button('Generate audio',elem_id="sadtalker_audio_generate", variant='primary')
-                                tts.click(fn=tts_talker.test, inputs=[input_text], outputs=[driven_audio])
+                    # with gr.TabItem('Upload OR TTS'):
+                    #     with gr.Column(variant='panel'):
+                    #         driven_audio = gr.Audio(label="Input audio", source="upload", type="filepath")
+
+                    #     if sys.platform != 'win32' and not in_webui: 
+                    #         from src.utils.text2speech import TTSTalker
+                    #         tts_talker = TTSTalker()
+                    #         with gr.Column(variant='panel'):
+                    #             input_text = gr.Textbox(label="Generating audio from text", lines=5, placeholder="please enter some text here, we genreate the audio from text using @Coqui.ai TTS.")
+                    #             tts = gr.Button('Generate audio',elem_id="sadtalker_audio_generate", variant='primary')
+                    #             tts.click(fn=tts_talker.test, inputs=[input_text], outputs=[driven_audio])
                             
             with gr.Column(variant='panel'): 
                 with gr.Tabs(elem_id="sadtalker_checkbox"):
@@ -60,15 +65,24 @@ def sadtalker_demo(checkpoint_path='checkpoints', config_path='src/config', warp
                             # width = gr.Slider(minimum=64, elem_id="img2img_width", maximum=2048, step=8, label="Manually Crop Width", value=512) # img2img_width
                             # height = gr.Slider(minimum=64, elem_id="img2img_height", maximum=2048, step=8, label="Manually Crop Height", value=512) # img2img_width
                             pose_style = gr.Slider(minimum=0, maximum=46, step=1, label="Pose style", value=0) # 
-                            size_of_image = gr.Radio([256, 512], value=256, label='face model resolution', info="use 256/512 model?") # 
+                            size_of_image = gr.Radio([256], value=256, label='face model resolution', info="use 256*256 model?") # 
                             preprocess_type = gr.Radio(['crop', 'resize','full', 'extcrop', 'extfull'], value='crop', label='preprocess', info="How to handle input image?")
                             is_still_mode = gr.Checkbox(label="Still Mode (fewer head motion, works with preprocess `full`)")
-                            batch_size = gr.Slider(label="batch size in generation", step=1, maximum=10, value=2)
-                            enhancer = gr.Checkbox(label="GFPGAN as Face enhancer")
+                            # batch_size = gr.Slider(label="batch size in generation", step=1, maximum=10, value=2)
+                            enhancer = gr.Checkbox(label="Codeformer as Face enhancer")
+                            upscaler = gr.Checkbox(label="Upscale 4X")
                             submit = gr.Button('Generate', elem_id="sadtalker_generate", variant='primary')
+                            # pose_style = gr.Slider(minimum=0, maximum=46, step=1, label="Pose style", value=0) # 
+                            # size_of_image = gr.Radio([256, 512], value=256, label='face model resolution', info="use 256/512 model?") # 
+                            # preprocess_type = gr.Radio(['crop', 'resize','full', 'extcrop', 'extfull'], value='crop', label='preprocess', info="How to handle input image?")
+                            # is_still_mode = gr.Checkbox(label="Still Mode (fewer head motion, works with preprocess `full`)")
+                            # batch_size = gr.Slider(label="batch size in generation", step=1, maximum=10, value=2)
+                            # enhancer = gr.Checkbox(label="GFPGAN as Face enhancer")
+                            # submit = gr.Button('Generate', elem_id="sadtalker_generate", variant='primary')
                             
                 with gr.Tabs(elem_id="sadtalker_genearted"):
-                        gen_video = gr.Video(label="Generated video", format="mp4").style(width=256)
+                        # gen_video = gr.Video(label="Generated video", format="mp4").style(width=256)
+                        gen_video = gr.File(label="Generated video").style(width=256)
 
         if warpfn:
             submit.click(
@@ -78,12 +92,14 @@ def sadtalker_demo(checkpoint_path='checkpoints', config_path='src/config', warp
                                 preprocess_type,
                                 is_still_mode,
                                 enhancer,
-                                batch_size,                            
+                                upscaler,
+                                # batch_size,                            
                                 size_of_image,
                                 pose_style
                                 ], 
                         outputs=[gen_video]
                         )
+
         else:
             submit.click(
                         fn=sad_talker.test, 
@@ -92,7 +108,8 @@ def sadtalker_demo(checkpoint_path='checkpoints', config_path='src/config', warp
                                 preprocess_type,
                                 is_still_mode,
                                 enhancer,
-                                batch_size,                            
+                                upscaler,
+                                # batch_size,                            
                                 size_of_image,
                                 pose_style
                                 ], 
@@ -104,8 +121,7 @@ def sadtalker_demo(checkpoint_path='checkpoints', config_path='src/config', warp
 
 if __name__ == "__main__":
 
-    demo = sadtalker_demo()
+    demo = sadtalker_demo(size=256, facerender='pirender')
     demo.queue()
-    demo.launch()
-
+    demo.launch(ssl_verify=False, server_name="0.0.0.0", server_port=7997)
 

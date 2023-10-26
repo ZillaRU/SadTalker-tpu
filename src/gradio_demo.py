@@ -19,7 +19,7 @@ def mp3_to_wav(mp3_filename,wav_filename,frame_rate):
 
 class SadTalker():
 
-    def __init__(self, checkpoint_path='checkpoints', config_path='src/config', lazy_load=False):
+    def __init__(self, checkpoint_path='checkpoints', size=256, facerender='pirender', config_path='src/config'):
 
         if torch.cuda.is_available():
             device = "cuda"
@@ -34,21 +34,7 @@ class SadTalker():
 
         self.checkpoint_path = checkpoint_path
         self.config_path = config_path
-      
-
-    def test(self, source_image, driven_audio, preprocess='crop', 
-        still_mode=False,  use_enhancer=False, batch_size=1, size=256, 
-        pose_style = 0, 
-        facerender='facevid2vid',
-        exp_scale=1.0, 
-        use_ref_video = False,
-        ref_video = None,
-        ref_info = None,
-        use_idle_mode = False,
-        length_of_audio = 0, use_blink=True,
-        result_dir='./results/'):
-
-        self.sadtalker_paths = init_path(self.checkpoint_path, self.config_path, size, False, preprocess)
+        self.sadtalker_paths = init_path(self.checkpoint_path, self.config_path, size, False, 'crop')
         print(self.sadtalker_paths)
             
         self.audio_to_coeff = Audio2Coeff(self.sadtalker_paths, self.device)
@@ -58,10 +44,21 @@ class SadTalker():
             self.animate_from_coeff = AnimateFromCoeff(self.sadtalker_paths, self.device)
         elif facerender == 'pirender' or self.device == 'mps':
             self.animate_from_coeff = AnimateFromCoeff_PIRender(self.sadtalker_paths, self.device)
-            facerender = 'pirender'
         else:
             raise(RuntimeError('Unknown model: {}'.format(facerender)))
-            
+
+    def test(self, source_image, driven_audio, preprocess='crop', 
+        still_mode=False,  use_enhancer=False, upscale4x=False, size=256, 
+        pose_style = 0, 
+        facerender='pirender',
+        batch_size=2,
+        exp_scale=1.0, 
+        use_ref_video = False,
+        ref_video = None,
+        ref_info = None,
+        use_idle_mode = False,
+        length_of_audio = 0, use_blink=True,
+        result_dir='./results/'):
 
         time_tag = str(uuid.uuid4())
         save_dir = os.path.join(result_dir, time_tag)
@@ -151,13 +148,14 @@ class SadTalker():
         #coeff2video
         data = get_facerender_data(coeff_path, crop_pic_path, first_coeff_path, audio_path, batch_size, still_mode=still_mode, \
             preprocess=preprocess, size=size, expression_scale = exp_scale, facemodel=facerender)
-        return_path = self.animate_from_coeff.generate(data, save_dir,  pic_path, crop_info, enhancer='gfpgan' if use_enhancer else None, preprocess=preprocess, img_size=size)
+        
+        return_path = self.animate_from_coeff.generate(data, save_dir,  pic_path, crop_info, enhancer='codeformer' if use_enhancer else None, background_enhancer='realesrgan' if upscale4x else None, preprocess=preprocess, img_size=size)
         video_name = data['video_name']
         print(f'The generated video is named {video_name} in {save_dir}')
 
-        del self.preprocess_model
-        del self.audio_to_coeff
-        del self.animate_from_coeff
+        # del self.preprocess_model
+        # del self.audio_to_coeff
+        # del self.animate_from_coeff
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()

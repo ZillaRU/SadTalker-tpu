@@ -23,6 +23,7 @@ class FaceRestoration:
         return np_image
 
 
+# https://github.com/sczhou/CodeFormer/blob/master/inference_codeformer.py 参考这部分加上超分
 def setup_model():
     # os.makedirs(model_path, exist_ok=True)
     try:
