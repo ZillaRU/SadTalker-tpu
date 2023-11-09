@@ -1,5 +1,6 @@
 # from tpu_perf.infer import SGInfer
 from ..npuengine import EngineOV
+from .detection import init_detection_model
 # import numpy as np 
 # import time 
 # import torch

@@ -41,9 +41,9 @@ class SadTalker():
         self.preprocess_model = CropAndExtract(self.sadtalker_paths, self.device)
         
         if facerender == 'facevid2vid' and self.device != 'mps':
-            self.animate_from_coeff = AnimateFromCoeff(self.sadtalker_paths, self.device)
+            self.animate_from_coeff = AnimateFromCoeff(size, self.sadtalker_paths, self.device)
         elif facerender == 'pirender' or self.device == 'mps':
-            self.animate_from_coeff = AnimateFromCoeff_PIRender(self.sadtalker_paths, self.device)
+            self.animate_from_coeff = AnimateFromCoeff_PIRender(size, self.sadtalker_paths, self.device)
         else:
             raise(RuntimeError('Unknown model: {}'.format(facerender)))
 
@@ -160,7 +160,10 @@ class SadTalker():
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
-            
+        
+        if return_path[-3:] == 'wmv':
+            os.system(f"ffmpeg -hide_banner -loglevel error -i {return_path} -c:v copy -c:a copy -y {return_path[:-3]+'mp4'}")
+            return_path = return_path[:-3]+'mp4'
         import gc; gc.collect()
         
         return return_path

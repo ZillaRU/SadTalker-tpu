@@ -12,6 +12,7 @@ from torch.multiprocessing import Pool, Process, set_start_method
 
 from facexlib.alignment import landmark_98_to_68
 from facexlib.detection import init_detection_model
+# from src.utils.facelib import init_detection_model
 
 from facexlib.utils import load_file_from_url
 from facexlib.alignment.awing_arch import FAN
@@ -42,17 +43,18 @@ class KeypointExtractor():
         except:
             root_path = 'gfpgan/weights'
 
-        self.detector = init_alignment_model('awing_fan',device=device, model_rootpath=root_path)   
-        self.det_net = init_detection_model('retinaface_resnet50', half=False,device=device, model_rootpath=root_path)
+        self.detector = init_alignment_model('awing_fan', device=device, model_rootpath=root_path)
+        self.det_net = init_detection_model('retinaface_resnet50', half=False, device=device, model_rootpath=root_path)
+        # self.det_net = init_detection_model('retinaface_resnet50', half=False)
 
     def extract_keypoint(self, images, name=None, info=True):
         if isinstance(images, list):
             keypoints = []
             if info:
-                i_range = tqdm(images,desc='landmark Det:')
+                i_range = tqdm(images, desc='landmark Det:')
             else:
                 i_range = images
-
+            
             for image in i_range:
                 current_kp = self.extract_keypoint(image)
                 # current_kp = self.detector.get_landmarks(np.array(image))
@@ -71,7 +73,7 @@ class KeypointExtractor():
                         # face detection -> face alignment.
                         img = np.array(images)
                         bboxes = self.det_net.detect_faces(images, 0.97)
-                        
+                        # import pdb; pdb.set_trace()
                         bboxes = bboxes[0]
                         img = img[int(bboxes[1]):int(bboxes[3]), int(bboxes[0]):int(bboxes[2]), :]
 

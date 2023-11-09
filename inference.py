@@ -21,6 +21,7 @@ def main(args):
     os.makedirs(save_dir, exist_ok=True)
     pose_style = args.pose_style
     device = args.device
+    size = args.size
     batch_size = args.batch_size
     input_yaw_list = args.input_yaw
     input_pitch_list = args.input_pitch
@@ -38,9 +39,9 @@ def main(args):
     audio_to_coeff = Audio2Coeff(sadtalker_paths,  device)
     
     if args.facerender == 'facevid2vid':
-        animate_from_coeff = AnimateFromCoeff(sadtalker_paths, device)
+        animate_from_coeff = AnimateFromCoeff(size, sadtalker_paths, device)
     elif args.facerender == 'pirender':
-        animate_from_coeff = AnimateFromCoeff_PIRender(sadtalker_paths, device)
+        animate_from_coeff = AnimateFromCoeff_PIRender(size, sadtalker_paths, device)
     else:
         raise(RuntimeError('Unknown model: {}'.format(args.facerender)))
     
@@ -121,12 +122,11 @@ if __name__ == '__main__':
     parser.add_argument("--cpu", dest="cpu", action="store_true") 
     parser.add_argument("--face3dvis", action="store_true", help="generate 3d face and 3d landmarks") 
     parser.add_argument("--still", action="store_true", help="can crop back to the original videos for the full body aniamtion") 
-    parser.add_argument("--preprocess", default='full', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images" ) 
+    parser.add_argument("--preprocess", default='crop', choices=['crop', 'extcrop', 'resize', 'full', 'extfull'], help="how to preprocess the images" ) 
     parser.add_argument("--verbose",action="store_true", help="saving the intermedia output or not" ) 
     parser.add_argument("--old_version",action="store_true", help="use the pth other than safetensor version" ) 
     parser.add_argument("--facerender", default='pirender', choices=['pirender', 'facevid2vid'] ) 
     
-
     # net structure and parameters
     parser.add_argument('--net_recon', type=str, default='resnet50', choices=['resnet18', 'resnet34', 'resnet50'], help='useless')
     parser.add_argument('--init_path', type=str, default=None, help='Useless')

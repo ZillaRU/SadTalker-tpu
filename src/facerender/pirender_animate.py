@@ -30,8 +30,8 @@ except:
 
 class AnimateFromCoeff_PIRender():
 
-    def __init__(self, sadtalker_path, device):
-        self.net_G = EngineOV('./checkpoints/fastg3.bmodel')  # pi_render.bmodel', device_id=0)
+    def __init__(self, size, sadtalker_path, device):
+        self.net_G = EngineOV('./checkpoints/fastg3.bmodel' if size == 256 else './checkpoints/pirender_4-3-512-512_4-73-27.bmodel')  # pi_render.bmodel', device_id=0)
 
     def generate(self, x, video_save_dir, pic_path, crop_info, enhancer=None, background_enhancer=None, preprocess='crop', img_size=256):
 
@@ -43,7 +43,7 @@ class AnimateFromCoeff_PIRender():
         with torch.no_grad():
             predictions_video = []
             for i in tqdm(range(target_semantics.shape[1]), 'FaceRender:'):
-                predictions_video.append(self.net_G([source_image.numpy(), target_semantics[:, i]])[0])
+                predictions_video.append(self.net_G([source_image.numpy().astype(np.float32), target_semantics[:, i].numpy().astype(np.float32)])[0])
         
         predictions_video = np.stack(predictions_video, axis=1)
         predictions_video = np.reshape(predictions_video, (-1,) + predictions_video.shape[2:])
@@ -59,11 +59,9 @@ class AnimateFromCoeff_PIRender():
         original_size = crop_info[0]
         if original_size:
             result = [ cv2.resize(result_i,(img_size, int(img_size * original_size[1]/original_size[0]) )) for result_i in result ]
-        # import pdb; pdb.set_trace()
         video_name = x['video_name']  + '.wmv'
         path = os.path.join(video_save_dir, 'temp_'+video_name)
         
-        # import pdb; pdb.set_trace()
         # imageio.mimsave(path.replace('mp4','wmv'), result, fps=float(25))
         imageio.mimsave(path, result, fps=float(25))
         # imageio.mimsave(path, result, format='GIF', duration=5)
