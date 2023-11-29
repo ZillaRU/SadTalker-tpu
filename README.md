@@ -1,3 +1,8 @@
+下载bmodels：
+python3 -m dfn --url https://disk.sophgo.vip/sharing/pQyc1dNeL
+放在对应目录下
+
+
 <div align="center">
 
 <img src='https://user-images.githubusercontent.com/4397546/229094115-862c747e-7397-4b54-ba4a-bd368bfe2e0f.png' width='500px'/>
